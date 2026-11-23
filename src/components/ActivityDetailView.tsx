@@ -53,9 +53,17 @@ export const ActivityDetailView: React.FC<ActivityDetailViewProps> = ({
           materialsCount: activity.materials.length,
         }),
       });
-      const data = await res.json();
+      const rawText = await res.text();
+      let data: any = null;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        throw new Error(
+          'O endpoint de resumo por IA não retornou JSON válido. Verifique se a GEMINI_API_KEY está configurada no ambiente.'
+        );
+      }
       if (!res.ok) {
-        throw new Error(data.error || 'Erro ao gerar resumo.');
+        throw new Error(data?.error || 'Erro ao gerar resumo.');
       }
       saveCachedSummary(activity.id, data);
       setSummary(data);

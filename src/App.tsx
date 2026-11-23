@@ -17,6 +17,10 @@ import {
   initAuth,
   logout,
 } from './lib/firebaseAuth';
+import {
+  ClassroomAuthExpiredError,
+  syncClassroomFromGoogle,
+} from './lib/classroomClient';
 import { getTranslations } from './lib/i18n';
 import {
   DEFAULT_SETTINGS,
@@ -108,35 +112,20 @@ export default function App() {
     setSyncError(null);
 
     try {
-      const res = await fetch('/api/classroom/sync', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await res.json();
-
-      if (res.status === 401) {
-        clearAccessToken();
-        setAccessToken(null);
-        setNeedsAuth(true);
-        setAuthError(
-          data.error ||
-            'Sua conexão com o Google Classroom expirou. Clique em Entrar com Google para renovar.'
-        );
-        return;
-      }
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Erro ao sincronizar atividades do Google Classroom.');
-      }
-
-      const payload = data as ClassroomSyncPayload;
+      const payload = await syncClassroomFromGoogle(token);
       setCourses(payload.courses || []);
       setActivities(payload.activities || []);
       setAnnouncements(payload.announcements || []);
       setLastSyncedAt(payload.syncedAt);
     } catch (err: any) {
-      setSyncError(err.message || 'Não foi possível buscar dados do Classroom.');
+      if (err instanceof ClassroomAuthExpiredError) {
+        clearAccessToken();
+        setAccessToken(null);
+        setNeedsAuth(true);
+        setAuthError(err.message);
+        return;
+      }
+      setSyncError(err?.message || 'Não foi possível buscar dados do Classroom.');
     } finally {
       setIsSyncing(false);
     }

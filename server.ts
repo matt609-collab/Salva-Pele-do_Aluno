@@ -150,9 +150,9 @@ app.get('/api/classroom/sync', async (req, res) => {
   }
 
   try {
-    // 1. Tenta listar turmas ativas onde o usuário é estudante
-    let coursesResp = await fetchGoogleJson<{ courses?: any[] }>(
-      'https://classroom.googleapis.com/v1/courses?studentId=me&courseStates=ACTIVE&pageSize=30',
+    // 1. Lista todas as turmas vinculadas à conta (como aluno ou professor, ativas ou recém-criadas)
+    const coursesResp = await fetchGoogleJson<{ courses?: any[] }>(
+      'https://classroom.googleapis.com/v1/courses?pageSize=50',
       accessToken
     );
 
@@ -172,18 +172,9 @@ app.get('/api/classroom/sync', async (req, res) => {
       return;
     }
 
-    let rawCourses = coursesResp.data?.courses ?? [];
-
-    // Fallback: caso o usuário tenha turmas em que é professor ou não filtradas por studentId=me
-    if (rawCourses.length === 0) {
-      const allResp = await fetchGoogleJson<{ courses?: any[] }>(
-        'https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE&pageSize=30',
-        accessToken
-      );
-      if (allResp.ok && allResp.data?.courses) {
-        rawCourses = allResp.data.courses;
-      }
-    }
+    const rawCourses = (coursesResp.data?.courses ?? []).filter(
+      (c) => c.courseState !== 'ARCHIVED' && c.courseState !== 'DECLINED'
+    );
 
     const nowMs = Date.now();
     const allActivities: any[] = [];

@@ -97,9 +97,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           avgDailyScreenHours: draftSettings.avgDailyScreenHours,
         }),
       });
-      const data = await res.json();
+      const rawText = await res.text();
+      let data: any = null;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        throw new Error(
+          'O endpoint de análise de rotina não retornou JSON válido. Verifique se a GEMINI_API_KEY está configurada no ambiente.'
+        );
+      }
       if (!res.ok) {
-        throw new Error(data.error || 'Falha ao gerar análise.');
+        throw new Error(data?.error || 'Falha ao gerar análise.');
       }
       setAiInsight(data);
     } catch (err: any) {
