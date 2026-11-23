@@ -1,0 +1,6 @@
+{
+  "name": "SPA - Salva Pele do Aluno",
+  "description": "Plataforma estudantil integrada ao Google Classroom para organizar tarefas pendentes, calendário automático de entregas e lembretes inteligentes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
